@@ -1,0 +1,26 @@
+From 994242aec12be256ecfe1fb4d311adffa39cf69f Mon Sep 17 00:00:00 2001
+From: Zhizhen Tang <zhizhen.tang@intel.com>
+Date: Wed, 24 Apr 2019 11:09:59 +0800
+Subject: [PATCH] Add gcc cflags
+
+Signed-off-by: Zhizhen Tang <zhizhen.tang@intel.com>
+---
+ auto/cc/gcc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/auto/cc/gcc b/auto/cc/gcc
+index a5c5c18..7baa80d 100644
+--- a/auto/cc/gcc
++++ b/auto/cc/gcc
+@@ -153,7 +153,7 @@ case "$NGX_GCC_VER" in
+ 
+     *)
+         # we have a lot of the unused function arguments
+-        CFLAGS="$CFLAGS -Wno-unused-parameter"
++        CFLAGS="$CFLAGS -Wno-unused-parameter -Wno-implicit-fallthrough"
+         # 4.2.1 shows the warning in wrong places
+         #CFLAGS="$CFLAGS -Wunreachable-code"
+ 
+-- 
+2.7.4
+
