@@ -1,17 +1,119 @@
+From 9f850b83a2bae648930e285debe9447fff66fb47 Mon Sep 17 00:00:00 2001
+From: Zhizhen Tang <zhizhen.tang@intel.com>
+Date: Sun, 28 Apr 2019 11:27:36 +0800
+Subject: [PATCH] RTMP stop workaround for ffmpeg
+
+Signed-off-by: Zhizhen Tang <zhizhen.tang@intel.com>
+---
+ libavformat/rtmpproto.c | 25 ++++++++++++++++++++++---
+ 1 file changed, 22 insertions(+), 3 deletions(-)
+
 diff --git a/libavformat/rtmpproto.c b/libavformat/rtmpproto.c
-index b741e42..6fcf755 100644
+index b741e42..de6d64b 100644
 --- a/libavformat/rtmpproto.c
 +++ b/libavformat/rtmpproto.c
-@@ -2425,6 +2425,12 @@ static int get_packet(URLContext *s, int for_header)
+@@ -2419,8 +2419,10 @@ static int get_packet(URLContext *s, int for_header)
+                                        rt->in_chunk_size, &rt->prev_pkt[0],
+                                        &rt->nb_prev_pkt[0])) <= 0) {
+             if (ret == 0) {
++				printf("====================get_packet 111 ret == 0 \n");
+                 return AVERROR(EAGAIN);
+             } else {
++				printf("=======================get_packet 111 ret != 0\n");
+                 return AVERROR(EIO);
              }
          }
+@@ -2433,6 +2435,7 @@ static int get_packet(URLContext *s, int for_header)
+             av_log(s, AV_LOG_DEBUG, "Sending bytes read report\n");
+             if ((ret = gen_bytes_read(s, rt, rpkt.timestamp + 1)) < 0) {
+                 ff_rtmp_packet_destroy(&rpkt);
++				printf("=================x222222222222222\n");
+                 return ret;
+             }
+             rt->last_bytes_read = rt->bytes_read;
+@@ -2451,11 +2454,13 @@ static int get_packet(URLContext *s, int for_header)
+         }
  
-+        if (rpkt.timestamp < rt->last_timestamp)
-+        {
-+            ff_rtmp_packet_destroy(&rpkt);
-+            return AVERROR_EOF;
+         if (ret < 0) {//serious error in current packet
++			printf("=================get package 333333333333\n");
+             ff_rtmp_packet_destroy(&rpkt);
+             return ret;
+         }
+         if (rt->do_reconnect && for_header) {
+             ff_rtmp_packet_destroy(&rpkt);
++			printf("=====================xxxxxx77777777777\n");
+             return 0;
+         }
+         if (rt->state == STATE_STOPPED) {
+@@ -2466,24 +2471,29 @@ static int get_packet(URLContext *s, int for_header)
+                            rt->state == STATE_PUBLISHING ||
+                            rt->state == STATE_SENDING    ||
+                            rt->state == STATE_RECEIVING)) {
++			printf("===========x3333333333333\n");
+             ff_rtmp_packet_destroy(&rpkt);
+             return 0;
+         }
+         if (!rpkt.size || !rt->is_input) {
++			printf("=================get package 44444444444\n");
+             ff_rtmp_packet_destroy(&rpkt);
+             continue;
+         }
+         if (rpkt.type == RTMP_PT_VIDEO || rpkt.type == RTMP_PT_AUDIO) {
+             ret = append_flv_data(rt, &rpkt, 0);
+             ff_rtmp_packet_destroy(&rpkt);
++			printf("==================x44444444444444\n");
+             return ret;
+         } else if (rpkt.type == RTMP_PT_NOTIFY) {
+             ret = handle_notify(s, &rpkt);
+             ff_rtmp_packet_destroy(&rpkt);
++			printf("=================x555555555555555\n");
+             return ret;
+         } else if (rpkt.type == RTMP_PT_METADATA) {
+             ret = handle_metadata(rt, &rpkt);
+             ff_rtmp_packet_destroy(&rpkt);
++			printf("================x666666666666666\n");
+             return ret;
+         }
+         ff_rtmp_packet_destroy(&rpkt);
+@@ -2890,8 +2900,9 @@ static int rtmp_read(URLContext *s, uint8_t *buf, int size)
+     RTMPContext *rt = s->priv_data;
+     int orig_size = size;
+     int ret;
+-
++    printf("===========================rtmp_read\n");
+     while (size > 0) {
++		printf("================rtmp_read size > 0\n");
+         int data_left = rt->flv_size - rt->flv_off;
+ 
+         if (data_left >= size) {
+@@ -2906,8 +2917,14 @@ static int rtmp_read(URLContext *s, uint8_t *buf, int size)
+             rt->flv_off = rt->flv_size;
+             return data_left;
+         }
+-        if ((ret = get_packet(s, 0)) < 0)
+-           return ret;
++        if ((ret = get_packet(s, 0)) < 0) {
++			printf("=================return rtmp_read AV EOF\n");
++		    return AVERROR_EOF;
 +        }
-+
-         // Track timestamp for later use
-         rt->last_timestamp = rpkt.timestamp;
++		else
++		{
++		    printf("=================return rtmp_read get packet > 0\n");
++		}
+     }
+     return orig_size;
+ }
+@@ -3066,8 +3083,10 @@ static int rtmp_write(URLContext *s, const uint8_t *buf, int size)
  
+     if (ret == AVERROR(EAGAIN)) {
+         /* no incoming data to handle */
++		printf("==============rtmp_write ret = EAGAIN\n");
+         return size;
+     } else if (ret < 0) {
++		printf("==============rtmp_write ret = %d\n", ret);
+         return ret;
+     } else if (ret == 1) {
+         RTMPPacket rpkt = { 0 };
+-- 
+2.7.4
+
