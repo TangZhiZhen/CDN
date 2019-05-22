@@ -1,0 +1,58 @@
+From 56a66eb29809515bc9c93689ba73e6a5b0505192 Mon Sep 17 00:00:00 2001
+From: Zhizhen Tang <zhizhen.tang@intel.com>
+Date: Wed, 22 May 2019 15:58:10 +0800
+Subject: [PATCH] Add one interface for av1 mp4
+
+Signed-off-by: Zhizhen Tang <zhizhen.tang@intel.com>
+---
+ Source/Lib/Encoder/Codec/EbEncHandle.c | 34 +++++++++++++++++++++++++++++++---
+ 1 file changed, 31 insertions(+), 3 deletions(-)
+
+diff --git a/Source/Lib/Encoder/Codec/EbEncHandle.c b/Source/Lib/Encoder/Codec/EbEncHandle.c
+index aa307bf..a36e49c 100644
+--- a/Source/Lib/Encoder/Codec/EbEncHandle.c
++++ b/Source/Lib/Encoder/Codec/EbEncHandle.c
+@@ -3163,9 +3163,37 @@ EB_API EbErrorType eb_svt_enc_stream_header(
+     EbBufferHeaderType        **output_stream_ptr){
+ 
+     EbErrorType             return_error = EB_ErrorNone;
+-    UNUSED(svt_enc_component);
+-    UNUSED(output_stream_ptr);
+-    return return_error;
++	EbBufferHeaderType      *outputStreamBuffer;
++    Bitstream               *bitstreamPtr;
++	EbEncHandle             *pEncCompData  = (EbEncHandle*)svt_enc_component->p_component_private;
++	SequenceControlSet      *sequenceControlSetPtr = pEncCompData->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
++    EncodeContext           *encodeContextPtr = sequenceControlSetPtr->encode_context_ptr;
++
++    // Output buffer Allocation
++	EB_MALLOC(EbBufferHeaderType*, outputStreamBuffer, sizeof(EbBufferHeaderType), EB_N_PTR);
++	EB_MALLOC(uint8_t*, outputStreamBuffer->p_buffer, sizeof(uint8_t) * PACKETIZATION_PROCESS_BUFFER_SIZE, EB_N_PTR);
++	outputStreamBuffer->size = sizeof(EbBufferHeaderType);
++	outputStreamBuffer->n_alloc_len = PACKETIZATION_PROCESS_BUFFER_SIZE;
++	outputStreamBuffer->p_app_private = NULL;
++	outputStreamBuffer->pic_type = 0xFF;
++	outputStreamBuffer->n_filled_len = 0;
++
++    // Intermediate buffers
++	EB_MALLOC(Bitstream*, bitstreamPtr, sizeof(Bitstream), EB_N_PTR);
++	EB_MALLOC(OutputBitstreamUnit*, bitstreamPtr->output_bitstream_ptr, sizeof(OutputBitstreamUnit), EB_N_PTR);
++
++    return_error = output_bitstream_unit_ctor(
++					    (OutputBitstreamUnit *)bitstreamPtr->output_bitstream_ptr,
++			            PACKETIZATION_PROCESS_BUFFER_SIZE);
++	reset_bitstream((OutputBitstreamUnit*)bitstreamPtr->output_bitstream_ptr);
++
++    encode_sps_av1(bitstreamPtr, sequenceControlSetPtr);
++
++    copy_rbsp_bitstream_to_payload(bitstreamPtr, outputStreamBuffer->p_buffer, (uint32_t *)&(outputStreamBuffer->n_filled_len), (uint32_t *)&(outputStreamBuffer->n_alloc_len), encodeContextPtr);
++
++    *output_stream_ptr = outputStreamBuffer;
++
++	return return_error;
+ }
+ //
+ #if defined(__linux__) || defined(__APPLE__)
+-- 
+2.7.4
+
