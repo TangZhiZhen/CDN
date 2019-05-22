@@ -1,0 +1,92 @@
+From 286aebc148503a41bae41ce7cd223c48ec7fe0b8 Mon Sep 17 00:00:00 2001
+From: Tang Zhizhen <zhizhen.tang@intel.com>
+Date: Wed, 22 May 2019 11:05:13 +0800
+Subject: [PATCH] Fix AV1 mp4 issue
+
+Signed-off-by: TangZhizhen <zhizhen.tang@intel.com>
+---
+ libavcodec/libsvt_av1.c | 68 ++++++++++++++++++++---------------------
+ 1 file changed, 34 insertions(+), 34 deletions(-)
+
+diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
+index 3222c9e..e4f0e21 100644
+--- a/libavcodec/libsvt_av1.c
++++ b/libavcodec/libsvt_av1.c
+@@ -260,40 +260,40 @@ static av_cold int eb_enc_init(AVCodecContext *avctx)
+         goto failed_init_handle;
+     }
+ 
+- //   if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER) {
+- //       EbBufferHeaderType* headerPtr;
+- //       headerPtr->size       = sizeof(headerPtr);
+- //       headerPtr->n_filled_len  = 0; /* in/out */
+- //       headerPtr->p_buffer     = av_malloc(10 * 1024 * 1024);
+- //       headerPtr->n_alloc_len   = (10 * 1024 * 1024);
+- //
+- //       if (!headerPtr->p_buffer) {
+- //           av_log(avctx, AV_LOG_ERROR,
+- //                  "Cannot allocate buffer size %d.\n", headerPtr->n_alloc_len);
+- //           svt_ret = EB_ErrorInsufficientResources;
+- //           goto failed_init_enc;
+- //       }
+- //
+- //       svt_ret = eb_svt_enc_stream_header(svt_enc->svt_handle, &headerPtr);
+- //       if (svt_ret != EB_ErrorNone) {
+- //           av_log(avctx, AV_LOG_ERROR, "Error when build stream header.\n");
+- //           av_freep(&headerPtr->p_buffer);
+- //           goto failed_init_enc;
+- //       }
+- //
+- //       avctx->extradata_size = headerPtr->n_filled_len;
+- //       avctx->extradata = av_mallocz(avctx->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
+- //       if (!avctx->extradata) {
+- //           av_log(avctx, AV_LOG_ERROR,
+- //                  "Cannot allocate AV1 header of size %d.\n", avctx->extradata_size);
+- //           av_freep(&headerPtr->p_buffer);
+- //           svt_ret = EB_ErrorInsufficientResources;
+- //           goto failed_init_enc;
+- //       }
+- //       memcpy(avctx->extradata, headerPtr->p_buffer, avctx->extradata_size);
+- //
+- //       av_freep(&headerPtr->p_buffer);
+- //   }
++    if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER) {
++        EbBufferHeaderType* headerPtr;
++        headerPtr->size       = sizeof(headerPtr);
++        headerPtr->n_filled_len  = 0; /* in/out */
++        headerPtr->p_buffer     = av_malloc(10 * 1024 * 1024);
++        headerPtr->n_alloc_len   = (10 * 1024 * 1024);
++ 
++        if (!headerPtr->p_buffer) {
++            av_log(avctx, AV_LOG_ERROR,
++                   "Cannot allocate buffer size %d.\n", headerPtr->n_alloc_len);
++            svt_ret = EB_ErrorInsufficientResources;
++            goto failed_init_enc;
++        }
++ 
++        svt_ret = eb_svt_enc_stream_header(svt_enc->svt_handle, &headerPtr);
++        if (svt_ret != EB_ErrorNone) {
++            av_log(avctx, AV_LOG_ERROR, "Error when build stream header.\n");
++            av_freep(&headerPtr->p_buffer);
++            goto failed_init_enc;
++        }
++ 
++        avctx->extradata_size = headerPtr->n_filled_len;
++        avctx->extradata = av_mallocz(avctx->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
++        if (!avctx->extradata) {
++            av_log(avctx, AV_LOG_ERROR,
++                   "Cannot allocate AV1 header of size %d.\n", avctx->extradata_size);
++            av_freep(&headerPtr->p_buffer);
++            svt_ret = EB_ErrorInsufficientResources;
++            goto failed_init_enc;
++        }
++        memcpy(avctx->extradata, headerPtr->p_buffer, avctx->extradata_size);
++ 
++        av_freep(&headerPtr->p_buffer);
++    }
+     return 0;
+ 
+ failed_init_enc:
+-- 
+2.17.1
+

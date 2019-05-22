@@ -1,0 +1,34 @@
+From fd057bc9dbaccf6ac472cb52ebb1c6eb467b16fa Mon Sep 17 00:00:00 2001
+From: Zhizhen Tang <zhizhen.tang@intel.com>
+Date: Wed, 22 May 2019 12:58:18 +0800
+Subject: [PATCH] Remove sequence header on AV1
+
+Signed-off-by: Zhizhen Tang <zhizhen.tang@intel.com>
+---
+ Source/Lib/Common/Codec/EbPacketizationProcess.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/Source/Lib/Common/Codec/EbPacketizationProcess.c b/Source/Lib/Common/Codec/EbPacketizationProcess.c
+index 691a4d5..f9342ef 100644
+--- a/Source/Lib/Common/Codec/EbPacketizationProcess.c
++++ b/Source/Lib/Common/Codec/EbPacketizationProcess.c
+@@ -320,11 +320,11 @@ void* packetization_kernel(void *input_ptr)
+             picture_control_set_ptr->bitstream_ptr->output_bitstream_ptr);
+ 
+         // Code the SPS
+-        if (picture_control_set_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME) {
+-            encode_sps_av1(
+-                picture_control_set_ptr->bitstream_ptr,
+-                sequence_control_set_ptr);
+-        }
++//        if (picture_control_set_ptr->parent_pcs_ptr->av1_frame_type == KEY_FRAME) {
++//            encode_sps_av1(
++//                picture_control_set_ptr->bitstream_ptr,
++//                sequence_control_set_ptr);
++//        }
+ 
+         write_frame_header_av1(
+             picture_control_set_ptr->bitstream_ptr,
+-- 
+2.7.4
+
